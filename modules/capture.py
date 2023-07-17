@@ -13,6 +13,7 @@ class CaptureImage:
         self.lock = Lock()
         self.shared_array = Array('B', self.max_size)
         self.size = Value('i', 0)
+        self.timestamp = Value('d', 0.0)  # Add timestamp
 
     def capture(self):
         cap = cv2.VideoCapture(self.index)
@@ -31,6 +32,7 @@ class CaptureImage:
             with self.lock:
                 self.shared_array[:len(img_bytes)] = np.frombuffer(img_bytes, dtype='uint8')
                 self.size.value = len(img_bytes)
+                self.timestamp.value = time.time()  # Save the timestamp
 
             time.sleep(self.env_capture_interval)
 

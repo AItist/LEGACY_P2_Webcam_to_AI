@@ -37,7 +37,6 @@ def get_available_webcams(all_list):
     """
     output = {}
     # 0: 'Intel(R) RealSense(TM) Depth Camera 435 with RGB Module RGB' = 1
-    # TODO : 환경변수 가져오도록 수정 리스트에 속한 웹캠만 사용하도록 수정
     checklist = {'Intel(R) RealSense(TM) Depth Camera 435 with RGB Module RGB' : 0,
                  'HD 4MP WEBCAM' : 0, # ABKO
                  'HD WEB CAMERA' : 1, # Home planet
