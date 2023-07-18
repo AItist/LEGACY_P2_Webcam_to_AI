@@ -3,7 +3,7 @@ import time
 
 class DisplayImage:
     @staticmethod
-    def displayAll(queues, images_queue):
+    def generateAndDisplayAll(queues, images_queue):
         while True:
             all_queues_have_data = all([not q.empty() for q in queues])
             if all_queues_have_data:
@@ -16,10 +16,11 @@ class DisplayImage:
                     
                     if img is not None:
                         images.append(img)  # Add image to the list
-                        print(f"Timestamp for image from camera {i}: {timestamp}")
-                        cv2.imshow(f'frame{i}', img)
+                        # print(f"Timestamp for image from camera {i}: {timestamp}")
+                        # cv2.imshow(f'frame{i}', img)
                     else:
-                        print(f"No image from camera {i}")
+                        # print(f"No image from camera {i}")
+                        pass
 
                 # Now 'images' list contains the latest image from each webcam
                 images_queue.put(images)  # Add the list to the queue

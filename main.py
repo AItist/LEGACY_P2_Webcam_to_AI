@@ -2,6 +2,10 @@ from multiprocessing import Process, Barrier, Queue
 from modules.capture import CaptureImage
 from modules.process import ProcessImage
 from modules.display import DisplayImage
+import cv2
+import time
+
+from concurrent.futures import ThreadPoolExecutor, wait
 
 def ready_capture_process(index, barrier):
     c = CaptureImage(index, barrier)
@@ -14,6 +18,38 @@ def create_process(capture, process):
     p2 = Process(target=process.extract)
 
     return p1, p2
+
+def ai_model_inference(index, img, model):
+    # TODO: Implement this function with your actual AI model
+    # For example:
+    # results = your_model.predict(img)
+    # return results
+    return f"{index} AI model inference results"
+
+def process_images(images_queue: Queue):
+    executor = ThreadPoolExecutor(max_workers=10)
+
+    # model = YoloV5Model()  # TODO: Initialize your AI model here
+    model = None
+
+    while True:
+        # print(images_queue)
+        if not images_queue.empty():
+            # Get the latest images list from the queue
+            images_list = None
+            while not images_queue.empty():
+                images_list = images_queue.get()  # This will always get the last item if the queue is not empty
+
+            if images_list is not None:
+                futures = [executor.submit(ai_model_inference, index, img, model) for index, img in enumerate(images_list)]
+                wait(futures)
+
+                print("AI model inference results:")
+                for i, furture in enumerate(futures):
+                    result = furture.result()
+                    print(f"Camera {i+1}: {result}")
+
+        time.sleep(1/20)
 
 if __name__ == '__main__':
     import modules.webcam_list as webcam_list
@@ -42,12 +78,16 @@ if __name__ == '__main__':
         process_lst.append(p1)
         process_lst.append(p2)
 
+    # Start the process_images function as a separate process
+    # TODO: images_queue에 있는 이미지를 ai 처리하도록 만드는 코드
+    p3 = Process(target=process_images, args=(images_queue,))
+    process_lst.append(p3)
+
     for process in process_lst:
         process.start()
 
-    DisplayImage.displayAll(queue_lst, images_queue)
+    DisplayImage.generateAndDisplayAll(queue_lst, images_queue)
 
-    # TODO: images_queue에 있는 이미지를 ai 처리하도록 만드는 코드 필요.
 
     for process in process_lst:
         process.join()
