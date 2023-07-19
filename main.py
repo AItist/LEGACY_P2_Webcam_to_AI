@@ -1,11 +1,21 @@
-from multiprocessing import Process, Barrier, Queue
+from multiprocessing import Process, Barrier, Queue, Lock
 from modules.capture import CaptureImage
 from modules.process import ProcessImage
 from modules.display import DisplayImage
 import cv2
 import time
+from queue import Empty
 
 from concurrent.futures import ThreadPoolExecutor, wait
+from common.enum_ import ePoses, eSegs
+
+RUN_POSE = True # 포즈 검출 실행 여부
+RUN_SEG = True # 영역 검출 실행 여부
+poseFlag = ePoses.CVZONE # 포즈 검출 시행시 어떤 모듈을 사용할지 결정
+segFlag = eSegs.YOLO # 영역 검출 시행시 어떤 모듈을 사용할지 결정
+
+# Create a Lock
+lock = Lock()
 
 def ready_capture_process(index, barrier):
     c = CaptureImage(index, barrier)
@@ -19,8 +29,26 @@ def create_process(capture, process):
 
     return p1, p2
 
-def ai_model_inference(index, img, model):
+def ai_model_inference(index, img):
     # TODO: Implement this function with your actual AI model
+    from common.detect_pose import detect_pose
+    from common.detect_seg import detect_seg
+
+    pose_string = None
+    seg_img = None
+
+    if RUN_POSE:
+        pose_string = detect_pose(img, poseFlag)
+        # print(f'{index} : {pose_string}')
+        pass
+
+    if RUN_SEG:
+        seg_img = detect_seg(img, segFlag)
+        cv2.imwrite(f'seg_{index}.jpg', seg_img)
+        pass
+
+    
+
     # For example:
     # results = your_model.predict(img)
     # return results
@@ -29,27 +57,34 @@ def ai_model_inference(index, img, model):
 def process_images(images_queue: Queue):
     executor = ThreadPoolExecutor(max_workers=10)
 
-    # model = YoloV5Model()  # TODO: Initialize your AI model here
-    model = None
-
     while True:
-        # print(images_queue)
         if not images_queue.empty():
             # Get the latest images list from the queue
             images_list = None
-            while not images_queue.empty():
-                images_list = images_queue.get()  # This will always get the last item if the queue is not empty
+            with lock:
+                try:
+                    for i in range(images_queue.qsize()):
+                        images_list = images_queue.get()  # This will always get the last item if the queue is not empty
+                        # print(i, images_queue.qsize(), images_queue.empty(), images_list[-1])
+                        time.sleep(0.01)
+                        pass 
+
+                    # print(images_queue.qsize(), images_queue.empty(), images_list[-1])
+                except Empty:
+                    print('break')
 
             if images_list is not None:
-                futures = [executor.submit(ai_model_inference, index, img, model) for index, img in enumerate(images_list)]
+                print(f'timestamp : {images_list[-1]}')
+
+                futures = [executor.submit(ai_model_inference, index, img) for index, img in enumerate(images_list[:-1])]
                 wait(futures)
 
-                print("AI model inference results:")
+                # print("AI model inference results:")
                 for i, furture in enumerate(futures):
                     result = furture.result()
                     print(f"Camera {i+1}: {result}")
 
-        time.sleep(1/20)
+        time.sleep(1/5)
 
 if __name__ == '__main__':
     import modules.webcam_list as webcam_list
@@ -65,6 +100,7 @@ if __name__ == '__main__':
     processimage_lst = []
     queue_lst = []
     process_lst = []
+    # images_queue = manager.Queue()  # Queue for images list
     images_queue = Queue()  # Queue for images list
 
     for i in range(CAM_COUNT):
@@ -86,7 +122,7 @@ if __name__ == '__main__':
     for process in process_lst:
         process.start()
 
-    DisplayImage.generateAndDisplayAll(queue_lst, images_queue)
+    DisplayImage.generateAndDisplayAll(queue_lst, images_queue, lock)
 
 
     for process in process_lst:
