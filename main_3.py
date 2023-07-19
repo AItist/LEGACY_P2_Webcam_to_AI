@@ -32,41 +32,61 @@ def create_process(capture, process):
     return p1, p2
 
 def ai_model_inference(index, img):
+    """
+    AI 모델 추론 함수
+    포즈와 영역 추론을 수행한다.
+    
+    Parameters
+    ----------
+    index : int
+        카메라 인덱스
+    img : numpy.ndarray
+        이미지
+
+    Returns
+    -------
+    pose_string : str
+        포즈 문자열
+    seg_img : numpy.ndarray
+        영역 이미지
+    """
     from common.detect_pose import detect_pose
     from common.detect_seg import detect_seg
 
-    try:
-        pose_string = None
-        seg_img = None
+    pose_string = None
+    seg_img = None
 
-        if RUN_POSE:
-            pose_string = detect_pose(img, poseFlag)
+    if RUN_POSE:
+        pose_string = detect_pose(img, poseFlag)
 
-        if RUN_SEG:
-            seg_img = detect_seg(img, segFlag)
-            seg_img = cv2.flip(seg_img, 0)
+    if RUN_SEG:
+        seg_img = detect_seg(img, segFlag)
+        seg_img = cv2.flip(seg_img, 0)
 
-        if isDebug:
-            print(f'{index} : {pose_string}')
-            cv2.imwrite(f'seg_{index}.jpg', seg_img)
-            pass
-
-        return pose_string, seg_img
-    except Exception as e:
-        print(f"main/ai_model_inference: Error during model inference: {e}")
+    if isDebug:
+        print(f'{index} : {pose_string}')
+        cv2.imwrite(f'seg_{index}.jpg', seg_img)
         pass
+
+    return pose_string, seg_img
+    # return f"{index} AI model inference results"
 
 def process_images(images_queue: Queue):
     executor = ThreadPoolExecutor(max_workers=10)
 
     while True:
         if not images_queue.empty():
+            # Get the latest images list from the queue
             images_list = None
             with lock:
                 try:
                     for i in range(images_queue.qsize()):
-                        images_list = images_queue.get()  
+                        images_list = images_queue.get()  # This will always get the last item if the queue is not empty
+                        # print(i, images_queue.qsize(), images_queue.empty(), images_list[-1])
                         time.sleep(0.01)
+                        pass 
+
+                    # print(images_queue.qsize(), images_queue.empty(), images_list[-1])
                 except Empty:
                     print('break')
 
@@ -80,6 +100,7 @@ def process_images(images_queue: Queue):
                 for i, future in enumerate(futures):
                     result = future.result()
                     print(f"Camera {i+1}: {result}")
+                    pass
 
         time.sleep(1/5)
 
@@ -97,7 +118,8 @@ if __name__ == '__main__':
     processimage_lst = []
     queue_lst = []
     process_lst = []
-    images_queue = Queue()  
+    # images_queue = manager.Queue()  # Queue for images list
+    images_queue = Queue()  # Queue for images list
 
     for i in range(CAM_COUNT):
         capture, process, queue = ready_capture_process(i, barrier)
@@ -110,19 +132,16 @@ if __name__ == '__main__':
         process_lst.append(p1)
         process_lst.append(p2)
 
-    t3 = Thread(target=process_images, args=(images_queue,))
-    threads_lst = [t3]
+    # Start the process_images function as a separate process
+    # TODO: images_queue에 있는 이미지를 ai 처리하도록 만드는 코드
+    p3 = Process(target=process_images, args=(images_queue,))
+    process_lst.append(p3)
 
     for process in process_lst:
         process.start()
 
-    for thread in threads_lst:
-        thread.start()
-
     DisplayImage.generateAndDisplayAll(queue_lst, images_queue, lock)
+
 
     for process in process_lst:
         process.join()
-
-    for thread in threads_lst:
-        thread.join()
