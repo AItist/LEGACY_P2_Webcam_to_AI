@@ -10,7 +10,7 @@ from threading import Thread, Lock
 from concurrent.futures import ThreadPoolExecutor, wait
 from common.enum_ import ePoses, eSegs
 
-isDebug = True
+isDebug = False
 RUN_POSE = True # 포즈 검출 실행 여부
 RUN_SEG = True # 영역 검출 실행 여부
 poseFlag = ePoses.CVZONE # 포즈 검출 시행시 어떤 모듈을 사용할지 결정
@@ -51,7 +51,7 @@ def ai_model_inference(index, img):
             cv2.imwrite(f'seg_{index}.jpg', seg_img)
             pass
 
-        return pose_string, seg_img
+        return [pose_string, seg_img]
     except Exception as e:
         print(f"main/ai_model_inference: Error during model inference: {e}")
         pass
@@ -71,15 +71,43 @@ def process_images(images_queue: Queue):
                     print('break')
 
             if images_list is not None:
-                print(f'timestamp : {images_list[-1]}')
+                # print(f'timestamp : {images_list[-1]}')
 
                 futures = [executor.submit(ai_model_inference, index, img) for index, img in enumerate(images_list[:-1])]
                 wait(futures)
 
-                print("AI model inference results:")
-                for i, future in enumerate(futures):
-                    result = future.result()
-                    print(f"Camera {i+1}: {result}")
+                try:
+                    # print("AI model inference results:")
+                    results = []
+                    for i, future in enumerate(futures):
+                        results.append(future.result())
+
+                        # pose, seg = future.result()
+                        # print(f"Camera {i+1}: pose {type(pose)} seg {type(seg)}")
+
+                    isPose = True
+                    poses = []
+                    segs = []
+                    for i, result in enumerate(results):
+                        pose, seg = result
+                        if pose is None:
+                            print(f'{i} pose is none')
+                            isPose = False
+                            continue 
+                        
+                        poses.append(pose)
+                        segs.append(seg)
+
+                    # pose 데이터가 둘 이상 검출되었을 경우 (추가 연산 단계 진행가능)
+                    if isPose:
+                        # TODO: 내일 할것 
+                        # 포즈 리스트 가지고 추가 연산 진행
+                        # 카메라 인스턴스 필요
+                        pass
+
+                except Exception as e:
+                    print(f"main/process_images: Error during AI model inference: {e}")
+                    pass
 
         time.sleep(1/5)
 
