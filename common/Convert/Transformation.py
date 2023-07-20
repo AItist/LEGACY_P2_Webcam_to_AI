@@ -104,10 +104,11 @@ isReshape = False
 def set_midpoints_with_1camera(cameras, points):
     transformed_points1 = cameras[0].transform_points(points[0])
 
+    midpoint_result = transformed_points1.reshape([99])
     # # 카메라에 대응하는 변환된 좌표 배열을 생성한다.
     # new_array1 = [np.array([camera1.position, row]) for row in transformed_points1]
 
-    return transformed_points1
+    return midpoint_result
 
 def set_midpoints_with_2cameras(cameras, points):
     # print(points[0][0])

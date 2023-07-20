@@ -9,7 +9,8 @@ class CaptureImage:
         
         self.index = index
         self.barrier = barrier
-        self.max_size = 1024 * 1024 * 3
+        self.max_size = 480 * 640 * 3
+        # self.max_size = 1024 * 1024 * 3
         self.lock = Lock()
         self.shared_array = Array('B', self.max_size)
         self.size = Value('i', 0)
@@ -19,11 +20,14 @@ class CaptureImage:
         cap = cv2.VideoCapture(self.index)
 
         # Use barrier to ensure cameras start at the same time
-        self.barrier.wait()
+        self.barrier.wait() # 640, 480, 3
+        # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+        # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
         while True:
             # Capture frame-by-frame
             ret, frame = cap.read()
+            # print(frame.shape)
 
             # Write the gray image to shared memory
             _, img_encoded = cv2.imencode('.jpg', frame)
