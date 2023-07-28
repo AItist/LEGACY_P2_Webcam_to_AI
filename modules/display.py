@@ -6,7 +6,7 @@ class DisplayImage:
     def generateAndDisplayAll(queues, images_queue, lock):
         while True:
             all_queues_have_data = all([not q.empty() for q in queues])
-            # TODO
+            
             with lock:
                 if all_queues_have_data:
                     images = []  # Initialize image list

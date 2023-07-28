@@ -25,7 +25,7 @@ def detect_pose(imgdata, debug=False):
         cv2.imwrite(f'webcam {imgdata[0]} pose.jpg', img)
 
 
-    # TODO : Image 대신에 Pose position을 전달한다.
+    # XXX : Image 대신에 Pose position을 전달한다.
     return img_bgr
 
 
@@ -48,5 +48,5 @@ async def async_detect_pose(imgdata, debug=False):
         cv2.imwrite(f'webcam {imgdata[0]} pose.jpg', img)
 
 
-    # TODO : Image 대신에 Pose position을 전달한다.
+    # XXX : Image 대신에 Pose position을 전달한다.
     return img_bgr

@@ -11,7 +11,7 @@ def detect_pose(imgdata, ePoses=ePoses.MEDIAPIPE, debug=False):
         return cvzone_.detect_pose(imgdata, debug=debug)
     
     """
-    TODO: 새로운 포즈 인식 모델을 추가할 때마다 이곳에 추가해야 함.
+    XXX: 새로운 포즈 인식 모델을 추가할 때마다 이곳에 추가해야 함.
     """
 
 async def async_detect_pose(imgdata, ePoses=ePoses.MEDIAPIPE, debug=False):
@@ -21,5 +21,5 @@ async def async_detect_pose(imgdata, ePoses=ePoses.MEDIAPIPE, debug=False):
         return await mediapipe_.async_detect_pose(imgdata, debug=debug)
     
     """
-    TODO: 새로운 포즈 인식 모델을 추가할 때마다 이곳에 추가해야 함.
+    XXX: 새로운 포즈 인식 모델을 추가할 때마다 이곳에 추가해야 함.
     """

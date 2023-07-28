@@ -103,7 +103,7 @@ isReshape = False
 
 def set_midpoints_with_1camera(cameras, points):
     transformed_points1 = cameras[0].transform_points(points[0])
-
+    
     midpoint_result = transformed_points1.reshape([99])
     # # 카메라에 대응하는 변환된 좌표 배열을 생성한다.
     # new_array1 = [np.array([camera1.position, row]) for row in transformed_points1]
@@ -205,7 +205,7 @@ def set_midpoints_with_4cameras(cameras, points):
     return midpoint_result
     
 
-# TODO: 카메라 1개 기준 코드 수행
+# XXX: 카메라 1개 기준 코드 수행
 if __name__ == '__main__':
     # 1 카메라 클래스 기반 인스턴스 생성 (카메라 위치, 카메라 각도를 가짐)
     camera1 = Camera(position=np.array([1, 1, 1]), rotation=np.array([0, 0, 0]))

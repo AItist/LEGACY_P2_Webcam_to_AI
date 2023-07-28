@@ -133,7 +133,6 @@ if __name__ == '__main__':
         process_lst.append(p2)
 
     # Start the process_images function as a separate process
-    # TODO: images_queue에 있는 이미지를 ai 처리하도록 만드는 코드
     p3 = Process(target=process_images, args=(images_queue,))
     process_lst.append(p3)
 
