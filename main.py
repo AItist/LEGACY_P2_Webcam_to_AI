@@ -35,6 +35,8 @@ camera3 = Transformation.Camera(position=np.array([0, 0, -1]), rotation=np.array
 camera4 = Transformation.Camera(position=np.array([0, 0, -1]), rotation=np.array([0, 0 , 0]))
 cameras = [camera1, camera2, camera3, camera4]
 
+#region process 준비단계
+
 def ready_capture_process(index, barrier):
     c = CaptureImage(index, barrier)
     p = ProcessImage(c.shared_array, c.size, c.lock, c.timestamp)
@@ -46,6 +48,10 @@ def create_process(capture, process):
     p2 = Process(target=process.extract)
 
     return p1, p2
+
+#endregion process 준비단계
+
+#region 모델 추론, 중점 계산, 패킷 전송 단계
 
 def ai_model_inference(index, img):
     from common.detect_pose import detect_pose
@@ -217,6 +223,8 @@ def process_images(images_queue: Queue):
                     pass
 
         time.sleep(1/5)
+
+#endregion 모델 추론, 중점 계산, 패킷 전송 단계
 
 if __name__ == '__main__':
     import modules.webcam_list as webcam_list

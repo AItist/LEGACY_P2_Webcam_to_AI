@@ -27,6 +27,7 @@ class CaptureImage:
         while True:
             # Capture frame-by-frame
             ret, frame = cap.read()
+            # cv2.imwrite(f'frame{self.index}.jpg', frame)
             # print(frame.shape)
 
             # Write the gray image to shared memory
