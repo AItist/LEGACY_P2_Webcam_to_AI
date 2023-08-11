@@ -37,12 +37,14 @@ cameras = [camera1, camera2, camera3, camera4]
 
 #region process 준비단계
 
+# 0-1 캡쳐, 프로세스 생성
 def ready_capture_process(index, barrier):
     c = CaptureImage(index, barrier)
     p = ProcessImage(c.shared_array, c.size, c.lock, c.timestamp)
 
     return c, p, p.queue
 
+# 0-2 프로세스 생성
 def create_process(capture, process):
     p1 = Process(target=capture.capture)
     p2 = Process(target=process.extract)
@@ -53,6 +55,7 @@ def create_process(capture, process):
 
 #region 모델 추론, 중점 계산, 패킷 전송 단계
 
+# process_images
 def ai_model_inference(index, img):
     from common.detect_pose import detect_pose
     from common.detect_seg import detect_seg
@@ -69,7 +72,7 @@ def ai_model_inference(index, img):
             seg_img = cv2.flip(seg_img, 0)
 
         if isDebug:
-            print(f'{index} : {pose_string}')
+            print(f'{index} : {pose_string}')   
             cv2.imwrite(f'seg_{index}.jpg', seg_img)
             pass
 
@@ -79,6 +82,7 @@ def ai_model_inference(index, img):
         print(f"main/ai_model_inference: Error during model inference: {e}")
         pass
 
+# process_images
 def _calculate_midpoints(poses):
     """
     calculate_midpoints에서 실행되는 카메라 2대 이상의 데이터 수집시 수행되는 함수
@@ -96,17 +100,31 @@ def _calculate_midpoints(poses):
 
     result = {}
     try:
-        # 문자열을 np.array로 변환
-        # for camIndex, poseString in poses.items():
+        str_p1 = None
+        str_p2 = None
+        str_p3 = None
+        str_p4 = None
+
+        # 변 환 및 보 정
         for camIndex, poseString in enumerate(poses):
             _pose = StringToNumpy.convert_string_to_numpy_array(poseString, CAM_WIDTH, CAM_HEIGHT)
             result[camIndex] = _pose
+            if camIndex == 0:
+                str_p1 = ','.join(map(str, _pose.reshape([99]))) 
+            elif camIndex == 1:
+                str_p2 = ','.join(map(str, _pose.reshape([99]))) 
+            elif camIndex == 2:
+                str_p3 = ','.join(map(str, _pose.reshape([99]))) 
+            elif camIndex == 3:
+                str_p4 = ','.join(map(str, _pose.reshape([99]))) 
         
         midpoint_result = None
 
         # 중점의 리스트를 생성한다.
         if pose_len == 1:
             midpoint_result = Transformation.set_midpoints_with_1camera(cameras, result)
+            # print(midpoint_result)
+            # midpoint_result = Transformation.set_midpoints_with_1camera(cameras, result, draw_queue, draw_lock)
         if pose_len == 2:
             midpoint_result = Transformation.set_midpoints_with_2cameras(cameras, result)
         elif pose_len == 3:
@@ -120,7 +138,8 @@ def _calculate_midpoints(poses):
         str_arr = ','.join(map(str, midpoint_result))
         # print(str_arr)
 
-        return str_arr
+        # return str_arr
+        return str_p1, str_p2, str_p3, str_p4, str_arr
 
         pass
     except Exception as e:
@@ -130,7 +149,7 @@ def _calculate_midpoints(poses):
 
     pass
 
-# start = time.time()
+# process_images
 def send_packet(packet):
     # Create a connection to the WebSocket server
     ws = websocket.WebSocket()
@@ -148,6 +167,8 @@ def send_packet(packet):
 
     # Close the connection
     ws.close()
+
+# def 
 
 def process_images(images_queue: Queue):
     executor = ThreadPoolExecutor(max_workers=10)
@@ -184,6 +205,9 @@ def process_images(images_queue: Queue):
                             isPose = False
                             break
 
+                        # print(f'main {i}, {pose}')
+                        
+
                         poses.append(pose)
                         segs.append(seg)
                         
@@ -199,8 +223,18 @@ def process_images(images_queue: Queue):
                         packet_data = {}
 
                         # 포즈 데이터 가공
-                        pose_midpoints = _calculate_midpoints(poses)
+                        # pose_midpoints = _calculate_midpoints(poses)
+                        p1, p2, p3, p4, pose_midpoints = _calculate_midpoints(poses)
                         packet_data['pose_string'] = pose_midpoints
+                        if p1 is not None:
+                            packet_data['pose_0'] = p1
+                        if p2 is not None:
+                            packet_data['pose_1'] = p2
+                        if p3 is not None:
+                            packet_data['pose_2'] = p3
+                        if p4 is not None:
+                            packet_data['pose_3'] = p4
+
                         # print(f'pose_midpoints : {pose_midpoints}')
 
                         # 영역 데이터 가공
@@ -263,6 +297,7 @@ if __name__ == '__main__':
         thread.start()
 
     DisplayImage.generateAndDisplayAll(queue_lst, images_queue, lock)
+
 
     for process in process_lst:
         process.join()

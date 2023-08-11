@@ -1,6 +1,7 @@
 import numpy as np
 import quaternion
 import common.Convert.LineSegments3_np as line3
+import matplot3d_2 as m3d
 
 def rotation_matrix(rotations):
     """
@@ -102,9 +103,22 @@ class Camera:
 isReshape = False
 
 def set_midpoints_with_1camera(cameras, points):
+# def set_midpoints_with_1camera(cameras, points, draw_queue, draw_lock):
     transformed_points1 = cameras[0].transform_points(points[0])
     
     midpoint_result = transformed_points1.reshape([99])
+
+    # point1 = cameras[0].position
+    # point2 = midpoint_result[:3]
+    # print(type(point1), type(point2))
+
+    
+    # points = [point1, point2]
+    # names = ['Point 1', 'Point 2']
+
+    # with draw_lock:
+    #     draw_queue.put([points, names])
+
     # # 카메라에 대응하는 변환된 좌표 배열을 생성한다.
     # new_array1 = [np.array([camera1.position, row]) for row in transformed_points1]
 
@@ -134,6 +148,7 @@ def set_midpoints_with_2cameras(cameras, points):
         midpoint = line3.final_midpoint(points)
 
         midpoint_result = np.append(midpoint_result, midpoint)
+
 
     if isReshape:
         midpoint_result = midpoint_result.reshape(-1, 3)

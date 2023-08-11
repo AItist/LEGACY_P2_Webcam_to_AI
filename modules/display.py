@@ -1,5 +1,6 @@
 import cv2
 import time
+import matplot3d_2 as m3d
 
 class DisplayImage:
     @staticmethod
@@ -34,6 +35,7 @@ class DisplayImage:
 
                     if cv2.waitKey(1) & 0xFF == ord('q'):  # Exit if Q is pressed
                         break
+
 
             time.sleep(1/20)
 
